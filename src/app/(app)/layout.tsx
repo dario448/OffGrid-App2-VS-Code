@@ -79,12 +79,12 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <motion.div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(242,248,238,0.88)" }}
+    <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(6,13,8,0.88)", backdropFilter: "blur(8px)" }}
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       onClick={onClose}>
-      <motion.div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
-        style={{ border: "1px solid rgba(109,184,42,0.2)" }}
+      <motion.div className="card w-full max-w-sm p-6"
+        style={{ border: "1px solid rgba(168,255,62,0.15)" }}
         initial={{ scale: 0.9, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9 }}
         onClick={e => e.stopPropagation()}>
         <h2 className="font-syne font-700 text-snow text-lg mb-5">Modifier mon profil</h2>
@@ -93,16 +93,16 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-4 mb-5">
           <ProfileAvatar photo={draft.photo} initial={draft.firstName[0] ?? "M"} size={56} />
           <div>
-            <p className="text-xs text-bark mb-1">Photo de profil</p>
+            <p className="text-xs text-bark mb-1.5">Photo de profil</p>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
             <button onClick={() => fileRef.current?.click()}
-              className="text-xs font-600 px-3 py-1.5 rounded-lg border transition-colors hover:text-snow"
-              style={{ borderColor: "rgba(0,0,0,0.12)" }}>
+              className="text-xs font-600 px-3 py-1.5 rounded-lg transition-colors text-bark hover:text-snow"
+              style={{ border: "1px solid rgba(255,255,255,0.12)" }}>
               {draft.photo ? "Changer la photo" : "Ajouter une photo"}
             </button>
             {draft.photo && (
               <button onClick={() => setDraft(d => ({ ...d, photo: null }))}
-                className="text-xs text-bark/50 ml-2 hover:text-red-500 transition-colors">
+                className="text-xs text-bark/50 ml-2 hover:text-red-400 transition-colors">
                 Supprimer
               </button>
             )}
@@ -116,8 +116,8 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
             <input
               value={draft.firstName}
               onChange={e => setDraft(d => ({ ...d, firstName: e.target.value.slice(0, 24) }))}
-              className="w-full px-3 py-2.5 rounded-xl border text-snow text-sm focus:outline-none"
-              style={{ background: "rgba(0,0,0,0.03)", borderColor: "rgba(109,184,42,0.35)" }}
+              className="input-dark w-full"
+              style={{ borderColor: "rgba(168,255,62,0.3)" }}
               maxLength={24}
             />
           </div>
@@ -126,8 +126,8 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
             <input
               value={draft.lastName}
               onChange={e => setDraft(d => ({ ...d, lastName: e.target.value.slice(0, 16) }))}
-              className="w-full px-3 py-2.5 rounded-xl border text-snow text-sm focus:outline-none"
-              style={{ background: "rgba(0,0,0,0.03)", borderColor: "rgba(109,184,42,0.35)" }}
+              className="input-dark w-full"
+              style={{ borderColor: "rgba(168,255,62,0.3)" }}
               maxLength={16}
             />
           </div>
@@ -135,13 +135,13 @@ function ProfileModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-3">
           <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border text-bark text-sm hover:text-snow transition-colors"
-            style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+            className="flex-1 py-2.5 rounded-xl text-bark text-sm hover:text-snow transition-colors"
+            style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
             Annuler
           </button>
           <motion.button onClick={handleSave}
-            className="flex-1 py-2.5 rounded-xl font-syne font-700 text-sm text-white"
-            style={{ background: saved ? "#16a34a" : "#6DB82A" }}
+            className="flex-1 py-2.5 rounded-xl font-syne font-700 text-sm"
+            style={{ background: saved ? "#16a34a" : "linear-gradient(135deg,#6DB82A,#A8FF3E)", color: "#060D08" }}
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {saved ? "✓ Sauvegardé" : "Enregistrer"}
           </motion.button>

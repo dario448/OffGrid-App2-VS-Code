@@ -3,67 +3,105 @@
 @tailwind utilities;
 
 :root {
-  --forest: #F2F8EE;
+  --forest: #060D08;
   --solar:  #A8FF3E;
-  --bark:   #637A6E;
-  --snow:   #0D1F14;
+  --bark:   #7EA87E;
+  --snow:   #E6F5E0;
 }
 
 html { -webkit-font-smoothing: antialiased; }
 
 body {
-  background: #EEF5E8;
+  background: #060D08;
   background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(168,255,62,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(109,184,42,0.05) 0%, transparent 50%);
-  color: #0D1F14;
+    radial-gradient(ellipse at 12% 0%, rgba(168,255,62,0.055) 0%, transparent 55%),
+    radial-gradient(ellipse at 88% 100%, rgba(46,139,64,0.04) 0%, transparent 55%);
+  color: #E6F5E0;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(109,184,42,0.3); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(109,184,42,0.55); }
+::-webkit-scrollbar-thumb { background: rgba(168,255,62,0.18); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(168,255,62,0.38); }
 
-::selection { background: rgba(168,255,62,0.35); }
+::selection { background: rgba(168,255,62,0.25); color: #060D08; }
 
-.text-glow { text-shadow: 0 0 24px rgba(109,184,42,0.7); }
-
+/* ── Base card ─────────────────────────────────────────────── */
 .card {
-  background: rgba(255,255,255,0.95);
-  border: 1px solid rgba(255,255,255,0.95);
-  border-radius: 1.5rem;
+  background: #0E1C0B;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 1.25rem;
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 2px 4px rgba(0,0,0,0.03),
-    0 6px 24px rgba(0,0,0,0.055);
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 8px 32px rgba(0,0,0,0.45);
 }
 
 .card-hover {
-  transition: border-color 0.22s, box-shadow 0.22s, transform 0.18s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.18s;
 }
-
 .card-hover:hover {
-  border-color: rgba(109,184,42,0.45);
+  border-color: rgba(168,255,62,0.2);
   box-shadow:
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 6px 20px rgba(0,0,0,0.07),
-    0 16px 48px rgba(109,184,42,0.09);
+    0 1px 0 rgba(255,255,255,0.04) inset,
+    0 8px 32px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(168,255,62,0.07);
   transform: translateY(-2px);
 }
 
+/* ── Glassmorphism ─────────────────────────────────────────── */
 .glass {
-  background: rgba(255,255,255,0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Hero gradient banners */
+/* ── Hero banner ───────────────────────────────────────────── */
 .hero-banner {
-  background: linear-gradient(135deg, #0A1D0F 0%, #183326 100%);
-  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #0D2210 0%, #162C12 60%, #102010 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(168,255,62,0.1);
   position: relative;
   overflow: hidden;
 }
+
+/* ── Gradient text utility ─────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, #A8FF3E 0%, #6DB82A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Neon glow text ────────────────────────────────────────── */
+.text-glow { text-shadow: 0 0 20px rgba(168,255,62,0.55); }
+
+/* ── Pill / badge ──────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ── Subtle divider ────────────────────────────────────────── */
+.divider { border-color: rgba(255,255,255,0.07); }
+
+/* ── Input on dark ─────────────────────────────────────────── */
+.input-dark {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #E6F5E0;
+  border-radius: 0.75rem;
+  padding: 10px 14px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.input-dark:focus { border-color: rgba(168,255,62,0.45); }
+.input-dark::placeholder { color: rgba(230,245,224,0.3); }

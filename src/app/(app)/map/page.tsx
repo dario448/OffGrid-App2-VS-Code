@@ -2,13 +2,13 @@
 
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { Spot } from "@/components/SolarMap";
 
 const SolarMap = dynamic(() => import("@/components/SolarMap"), {
   ssr: false,
   loading: () => (
-    <div className="w-full flex items-center justify-center bg-white/5 rounded-2xl" style={{ minHeight: 440 }}>
+    <div className="w-full flex items-center justify-center rounded-2xl" style={{ minHeight: 440, background: "rgba(255,255,255,0.02)" }}>
       <div className="flex flex-col items-center gap-3">
         <motion.div className="w-8 h-8 rounded-full border-2 border-solar border-t-transparent"
           animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
@@ -75,12 +75,19 @@ function generateSpots(lat: number, lng: number): Spot[] {
 type SunHour = { h: string; v: number; wm2: number };
 type SunInfo = { hours: SunHour[]; sunrise: string; sunset: string; peakHour: string };
 
+function intensityColor(pct: number) {
+  if (pct >= 90) return "#A8FF3E";
+  if (pct >= 75) return "#6DB82A";
+  if (pct >= 55) return "#F59E0B";
+  return "#64748B";
+}
+
 export default function MapPage() {
-  const [userPos, setUserPos]     = useState<{ lat: number; lng: number } | null>(null);
-  const [geoState, setGeoState]   = useState<"loading" | "ok" | "denied" | "unavailable">("loading");
-  const [accuracy, setAccuracy]   = useState<number | null>(null);
+  const [userPos, setUserPos]       = useState<{ lat: number; lng: number } | null>(null);
+  const [geoState, setGeoState]     = useState<"loading" | "ok" | "denied" | "unavailable">("loading");
+  const [accuracy, setAccuracy]     = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [sunInfo, setSunInfo]     = useState<SunInfo | null>(null);
+  const [sunInfo, setSunInfo]       = useState<SunInfo | null>(null);
   const [sunLoading, setSunLoading] = useState(false);
 
   const spots: Spot[] = userPos ? generateSpots(userPos.lat, userPos.lng) : [];
@@ -137,7 +144,6 @@ export default function MapPage() {
       setGeoState("unavailable");
       return;
     }
-
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -150,7 +156,6 @@ export default function MapPage() {
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
-
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
@@ -202,7 +207,8 @@ export default function MapPage() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
-      {/* Hero header */}
+
+      {/* ── Hero ─────────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
         className="hero-banner p-6 lg:p-8">
         <div className="absolute inset-0 pointer-events-none">
@@ -232,7 +238,7 @@ export default function MapPage() {
           </div>
           <div className="flex items-center gap-2 px-4 py-2 rounded-full"
             style={{ background: "rgba(168,255,62,0.12)", border: "1px solid rgba(168,255,62,0.3)" }}>
-            <motion.span className="w-2 h-2 rounded-full"
+            <motion.span className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ background: "#A8FF3E" }}
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1.5, repeat: Infinity }} />
@@ -243,8 +249,11 @@ export default function MapPage() {
       </motion.div>
 
       <div className="grid lg:grid-cols-3 gap-6">
+
         {/* ── Carte ──────────────────────────────── */}
-        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-forest-3/40" style={{ minHeight: 440 }}>
+        <motion.div className="lg:col-span-2 overflow-hidden rounded-2xl"
+          style={{ minHeight: 440, border: "1px solid rgba(255,255,255,0.07)" }}
+          initial={{ opacity: 0, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }}>
           <SolarMap
             spots={spots}
             selectedId={selectedId}
@@ -252,16 +261,23 @@ export default function MapPage() {
             userLat={userPos.lat}
             userLng={userPos.lng}
           />
-        </div>
+        </motion.div>
 
         {/* ── Panneau latéral ────────────────────── */}
         <div className="flex flex-col gap-3">
+
+          {/* Spot sélectionné */}
           <AnimatePresence mode="wait">
             {selectedSpot && (
               <motion.div key={selectedSpot.id} className="card p-5"
-                style={{ borderColor: "rgba(168,255,62,0.3)", boxShadow: "0 0 20px rgba(168,255,62,0.07)" }}
+                style={{ borderColor: "rgba(168,255,62,0.3)", boxShadow: "0 0 24px rgba(168,255,62,0.08)" }}
                 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}>
+
+                {/* Top accent line */}
+                <div className="absolute top-0 left-6 right-6 h-px"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(168,255,62,0.4), transparent)" }} />
+
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="text-[10px] text-solar-dim uppercase tracking-widest mb-1">Spot sélectionné</p>
@@ -269,31 +285,48 @@ export default function MapPage() {
                     <p className="text-bark text-xs mt-0.5">{selectedSpot.dist} de toi</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-space font-700 text-2xl text-solar-dim">{selectedSpot.intensity}%</p>
+                    <p className="font-space font-700 text-2xl" style={{ color: intensityColor(selectedSpot.intensity) }}>
+                      {selectedSpot.intensity}%
+                    </p>
                     <p className="text-[10px] text-bark">Intensité</p>
                   </div>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: "rgba(0,0,0,0.08)" }}>
-                  <motion.div className="h-full rounded-full bg-solar-dim"
+
+                {/* Intensity bar */}
+                <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ background: "rgba(255,255,255,0.07)" }}>
+                  <motion.div className="h-full rounded-full"
+                    style={{ background: `linear-gradient(90deg, #6DB82A, ${intensityColor(selectedSpot.intensity)})` }}
                     initial={{ width: 0 }}
                     animate={{ width: `${selectedSpot.intensity}%` }}
                     transition={{ duration: 0.6 }} />
                 </div>
+
                 <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="bg-forest-3/20 rounded-lg p-2.5 text-center">
+                  <div className="rounded-lg p-2.5 text-center"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
                     <p className="font-space text-sm text-solar-dim font-700">{selectedSpot.sun}</p>
                     <p className="text-[10px] text-bark">Soleil/jour</p>
                   </div>
-                  <div className="bg-forest-3/20 rounded-lg p-2.5 text-center">
-                    <p className="font-space text-sm text-snow">~{Math.round(selectedSpot.intensity * 0.4)}%</p>
+                  <div className="rounded-lg p-2.5 text-center"
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p className="font-space text-sm text-snow font-700">~{Math.round(selectedSpot.intensity * 0.4)}%</p>
                     <p className="text-[10px] text-bark">Recharge bonus</p>
                   </div>
                 </div>
+
+                {selectedSpot.rare && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-3"
+                    style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                    <span className="text-base">⭐</span>
+                    <span className="text-xs font-700" style={{ color: "#FCD34D" }}>Spot rare — XP ×3</span>
+                  </div>
+                )}
+
                 <motion.a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${selectedSpot.lat},${selectedSpot.lng}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-syne font-700 text-xs"
-                  style={{ background: "#A8FF3E", color: "#080D0A" }}
+                  style={{ background: "linear-gradient(135deg,#6DB82A,#A8FF3E)", color: "#060D08" }}
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   Itinéraire →
                 </motion.a>
@@ -301,37 +334,41 @@ export default function MapPage() {
             )}
           </AnimatePresence>
 
-          {/* Liste */}
-          <div className="card p-4 flex flex-col gap-1">
+          {/* Spots list */}
+          <motion.div className="card p-4 flex flex-col gap-1"
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <p className="text-xs text-bark uppercase tracking-widest mb-2">6 spots les plus proches</p>
-            {nearbySpots.map((spot) => (
-              <button key={spot.id} onClick={() => setSelectedId(spot.id)}
-                className={`flex items-center gap-3 p-2.5 rounded-xl text-left transition-all duration-200 w-full ${
-                  selectedId === spot.id
-                    ? "border"
-                    : "hover:bg-black/[0.02] border border-transparent"
-                }`}
-              style={selectedId === spot.id ? { background: "rgba(109,184,42,0.08)", borderColor: "rgba(109,184,42,0.3)" } : {}}>
-                <div className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: spot.rare ? "#f59e0b" : `rgba(168,255,62,${spot.intensity / 100})` }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <p className="text-xs text-snow truncate">{spot.name}</p>
-                    {spot.rare && <span className="text-[9px] text-amber-400 font-700 shrink-0">⭐ RARE</span>}
+            {nearbySpots.map((spot) => {
+              const isActive = selectedId === spot.id;
+              const col = intensityColor(spot.intensity);
+              return (
+                <button key={spot.id} onClick={() => setSelectedId(spot.id)}
+                  className="flex items-center gap-3 p-2.5 rounded-xl text-left transition-all duration-200 w-full"
+                  style={isActive
+                    ? { background: "rgba(168,255,62,0.06)", border: "1px solid rgba(168,255,62,0.25)" }
+                    : { border: "1px solid transparent" }}>
+                  <div className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: spot.rare ? "#F59E0B" : col }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs text-snow truncate">{spot.name}</p>
+                      {spot.rare && <span className="text-[9px] font-700 flex-shrink-0" style={{ color: "#FCD34D" }}>⭐</span>}
+                    </div>
+                    <p className="text-[10px] text-bark">{spot.dist} · {spot.sun}</p>
                   </div>
-                  <p className="text-[10px] text-bark">{spot.dist} · {spot.sun}</p>
-                </div>
-                <span className={`text-xs font-space font-600 ${selectedId === spot.id ? "text-solar-dim" : "text-bark"}`}>
-                  {spot.intensity}%
-                </span>
-              </button>
-            ))}
-          </div>
+                  <span className="text-xs font-space font-600" style={{ color: isActive ? col : "rgba(126,168,126,0.6)" }}>
+                    {spot.intensity}%
+                  </span>
+                </button>
+              );
+            })}
+          </motion.div>
         </div>
       </div>
 
-      {/* Courbe journalière */}
-      <div className="card p-6">
+      {/* ── Courbe d'ensoleillement ──────────────────────────── */}
+      <motion.div className="card p-6"
+        initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <div className="flex items-center justify-between mb-5">
           <p className="font-syne font-700 text-snow">Ensoleillement aujourd'hui</p>
           <div className="flex items-center gap-1.5">
@@ -344,6 +381,7 @@ export default function MapPage() {
             </span>
           </div>
         </div>
+
         {(() => {
           const hours = sunInfo?.hours ?? [];
           const BAR_MAX = 64;
@@ -361,33 +399,51 @@ export default function MapPage() {
                             : h.v > 60
                             ? "rgba(109,184,42,0.55)"
                             : "rgba(109,184,42,0.2)",
-                          boxShadow: isPeak ? "0 0 10px rgba(109,184,42,0.35)" : "none",
+                          boxShadow: isPeak ? "0 0 10px rgba(168,255,62,0.4)" : "none",
                         }}
                         initial={{ height: 0 }}
                         animate={{ height: (h.v / 100) * BAR_MAX }}
                         transition={{ delay: 0.3 + i * 0.04, duration: 0.5 }} />
-                      <span className="text-[8px] text-bark/60">{h.h}</span>
+                      <span className="text-[8px] text-bark/50">{h.h}</span>
                     </div>
                   );
                 })}
               </div>
-              <div className="flex justify-between mt-3 text-xs text-bark">
-                <span>🌅 Lever · {sunInfo?.sunrise ?? "—"}</span>
-                <span className="text-solar-dim font-600">Pic · {sunInfo?.peakHour ?? "—"}</span>
-                <span>🌇 Coucher · {sunInfo?.sunset ?? "—"}</span>
+              <div className="flex justify-between mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">🌅</span>
+                  <div>
+                    <p className="text-xs text-snow font-600">{sunInfo?.sunrise ?? "—"}</p>
+                    <p className="text-[10px] text-bark">Lever</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">☀️</span>
+                  <div className="text-center">
+                    <p className="text-xs font-700" style={{ color: "#A8FF3E" }}>{sunInfo?.peakHour ?? "—"}</p>
+                    <p className="text-[10px] text-bark">Pic solaire</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base">🌇</span>
+                  <div className="text-right">
+                    <p className="text-xs text-snow font-600">{sunInfo?.sunset ?? "—"}</p>
+                    <p className="text-[10px] text-bark">Coucher</p>
+                  </div>
+                </div>
               </div>
             </>
           ) : !sunLoading ? (
             <p className="text-bark text-sm text-center py-6">Impossible de charger les données solaires.</p>
           ) : (
-            <div className="flex items-end gap-1 h-20 opacity-30">
+            <div className="flex items-end gap-1 h-20 opacity-20">
               {Array.from({ length: 15 }).map((_, i) => (
-                <div key={i} className="flex-1 rounded-t-sm" style={{ height: 20, background: "rgba(109,184,42,0.2)" }} />
+                <div key={i} className="flex-1 rounded-t-sm" style={{ height: 20, background: "rgba(109,184,42,0.3)" }} />
               ))}
             </div>
           );
         })()}
-      </div>
+      </motion.div>
     </div>
   );
 }
