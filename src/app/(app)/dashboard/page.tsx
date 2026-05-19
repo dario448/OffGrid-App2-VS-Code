@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import Creature from "@/components/Creature";
+import { useProfile } from "@/lib/useProfile";
 
 /* ── Animated number ─────────────────────────────────────── */
 function AnimNum({ target, decimals = 0, suffix = "" }: { target: number; decimals?: number; suffix?: string }) {
@@ -24,57 +25,53 @@ function AnimNum({ target, decimals = 0, suffix = "" }: { target: number; decima
 function BatteryWidget() {
   const level = 78;
   return (
-    <div className="card card-hover p-6 flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+    <div className="card card-hover p-6 flex flex-col gap-5 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-40 h-40 rounded-full -translate-y-16 translate-x-16 opacity-40"
+        style={{ background: "radial-gradient(circle, rgba(109,184,42,0.12), transparent 70%)" }} />
+      <div className="relative flex items-start justify-between">
         <div>
           <p className="text-xs text-bark uppercase tracking-widest mb-1">Batterie OffGrid</p>
-          <p className="font-syne font-700 text-2xl text-snow">Chargée à</p>
+          <p className="font-syne font-700 text-xl text-snow">Autonomie</p>
+          <p className="text-xs text-bark mt-0.5">Estimée : 2 jours 4h</p>
         </div>
-        <motion.span
-          className="font-space font-700 text-4xl text-solar"
+        <motion.div className="text-right"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        >
-          {level}%
-        </motion.span>
+          transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+          <span className="font-space font-700 text-5xl leading-none" style={{ color: "#6DB82A" }}>{level}</span>
+          <span className="font-space text-xl text-bark">%</span>
+        </motion.div>
       </div>
 
       {/* Battery bar */}
-      <div className="relative h-8 rounded-full bg-forest-3/30 overflow-hidden border border-forest-3/60">
+      <div className="relative h-6 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.06)" }}>
         <motion.div
           className="h-full rounded-full"
-          style={{
-            background: "linear-gradient(90deg, #6DB82A, #A8FF3E)",
-            boxShadow: "0 0 20px rgba(168,255,62,0.3)",
-          }}
+          style={{ background: "linear-gradient(90deg, #6DB82A, #A8FF3E)", boxShadow: "0 0 16px rgba(168,255,62,0.25)" }}
           initial={{ width: 0 }}
           animate={{ width: `${level}%` }}
           transition={{ duration: 1.2, delay: 0.3, ease: "easeOut" }}
         />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-space text-xs text-forest font-700 mix-blend-difference">{level}% — Autonomie estimée : 2j 4h</span>
-        </div>
       </div>
 
-      {/* Stats sous la barre */}
-      <div className="grid grid-cols-3 gap-4 pt-2 border-t border-black/[0.06]">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-black/[0.06]">
         {[
-          { label: "Puissance solaire", value: "3.2W", active: true },
-          { label: "Énergie produite aujourd'hui", value: "18.4 Wh", active: false },
-          { label: "Dernière sync", value: "Il y a 2 min", active: false },
+          { label: "Puissance", value: "3.2W", color: "#6DB82A" },
+          { label: "Produit aujourd'hui", value: "18.4 Wh", color: "#0D1F14" },
+          { label: "Sync", value: "2 min", color: "#0D1F14" },
         ].map((s) => (
           <div key={s.label}>
-            <p className={`font-space font-600 text-sm ${s.active ? "text-solar-dim" : "text-snow"}`}>{s.value}</p>
-            <p className="text-[11px] text-bark mt-0.5 leading-tight">{s.label}</p>
+            <p className="font-space font-600 text-sm" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-[10px] text-bark mt-0.5 leading-tight">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Indicateur panneau solaire actif */}
-      <div className="flex items-center gap-2 text-xs text-solar-dim">
-        <motion.span className="w-2 h-2 rounded-full bg-solar-dim"
-          animate={{ opacity: [0.4, 1, 0.4] }}
+      <div className="flex items-center gap-2 text-xs" style={{ color: "#6DB82A" }}>
+        <motion.span className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ background: "#A8FF3E" }}
+          animate={{ opacity: [0.4, 1, 0.4], boxShadow: ["0 0 3px #A8FF3E", "0 0 8px #A8FF3E", "0 0 3px #A8FF3E"] }}
           transition={{ duration: 1.5, repeat: Infinity }} />
         Panneau solaire actif — recharge en cours
       </div>
@@ -229,37 +226,47 @@ function CO2Widget() {
             )}
           </AnimatePresence>
 
-          <div className="flex items-end gap-1 h-14">
-            {data.bars.map((bar, i) => (
-              <div
-                key={i}
-                className="flex-1 flex flex-col items-center gap-1 cursor-pointer"
-                onClick={() => setClickedBar(clickedBar === i ? null : i)}
-              >
-                <motion.div
-                  className="w-full rounded-sm"
-                  style={{
-                    background: ("active" in bar && bar.active)
-                      ? "#6DB82A"
-                      : clickedBar === i
-                      ? "rgba(109,184,42,0.45)"
-                      : "rgba(109,184,42,0.18)",
-                    boxShadow: ("active" in bar && bar.active)
-                      ? "0 0 8px rgba(109,184,42,0.35)"
-                      : clickedBar === i
-                      ? "0 0 6px rgba(109,184,42,0.25)"
-                      : "none",
-                  }}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${bar.h}%` }}
-                  transition={{ delay: i * 0.04, duration: 0.4, ease: "easeOut" }}
-                />
-                <span className={`text-[9px] truncate w-full text-center transition-colors ${clickedBar === i ? "text-solar-dim" : "text-bark/50"}`}>
-                  {bar.label}
-                </span>
+          {(() => {
+            const maxVal = Math.max(...data.bars.map((b) => b.value));
+            const BAR_MAX_PX = 64;
+            return (
+              <div className="flex items-end gap-1.5 h-20">
+                {data.bars.map((bar, i) => {
+                  const barH = maxVal > 0 ? (bar.value / maxVal) * BAR_MAX_PX : 0;
+                  const isActive = "active" in bar && bar.active;
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 flex flex-col items-center gap-1 cursor-pointer"
+                      onClick={() => setClickedBar(clickedBar === i ? null : i)}
+                    >
+                      <motion.div
+                        className="w-full rounded-sm"
+                        style={{
+                          background: isActive
+                            ? "#6DB82A"
+                            : clickedBar === i
+                            ? "rgba(109,184,42,0.45)"
+                            : "rgba(109,184,42,0.18)",
+                          boxShadow: isActive
+                            ? "0 0 8px rgba(109,184,42,0.35)"
+                            : clickedBar === i
+                            ? "0 0 6px rgba(109,184,42,0.25)"
+                            : "none",
+                        }}
+                        initial={{ height: 0 }}
+                        animate={{ height: barH }}
+                        transition={{ delay: i * 0.04, duration: 0.4, ease: "easeOut" }}
+                      />
+                      <span className={`text-[9px] truncate w-full text-center transition-colors ${clickedBar === i ? "text-solar-dim" : "text-bark/50"}`}>
+                        {bar.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </motion.div>
       </AnimatePresence>
 
@@ -285,36 +292,38 @@ function CO2Widget() {
 /* ── Quick stats ─────────────────────────────────────────── */
 function QuickStats() {
   const stats = [
-    { label: "Points OffGrid", value: "1 240", unit: "pts", icon: "⭐", trend: "+48 ce mois",  accent: "#5A9E1A" },
-    { label: "Rang mondial",   value: "#2 841", unit: "",   icon: "🌍", trend: "↑ 120 places", accent: "#0284C7" },
-    { label: "Streak",         value: "14",    unit: "j",  icon: "🔥", trend: "Record : 21j",  accent: "#EA580C" },
-    { label: "Amis actifs",    value: "8",     unit: "/12",icon: "👥", trend: "3 en ligne",    accent: "#7C3AED" },
+    { label: "Points OffGrid", value: "1 240", unit: "pts", icon: "⭐", trend: "+48 ce mois",  accent: "#6DB82A", glow: "rgba(109,184,42,0.15)" },
+    { label: "Rang mondial",   value: "#2 841", unit: "",   icon: "🌍", trend: "↑ 120 places", accent: "#0EA5E9", glow: "rgba(14,165,233,0.12)" },
+    { label: "Streak",         value: "14",    unit: "j",  icon: "🔥", trend: "Record : 21j",  accent: "#F97316", glow: "rgba(249,115,22,0.12)" },
+    { label: "Amis actifs",    value: "8",     unit: "/12",icon: "👥", trend: "3 en ligne",    accent: "#8B5CF6", glow: "rgba(139,92,246,0.12)" },
   ];
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((s, i) => (
         <motion.div
           key={s.label}
-          className="card card-hover p-4 relative overflow-hidden"
+          className="card card-hover p-5 relative overflow-hidden"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 + i * 0.08 }}
         >
-          {/* Tint background */}
-          <div className="absolute inset-0 rounded-[1.25rem] opacity-10"
-            style={{ background: `radial-gradient(ellipse at top left, ${s.accent}, transparent 70%)` }} />
+          <div className="absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-8 translate-x-8 opacity-50"
+            style={{ background: `radial-gradient(circle, ${s.glow}, transparent 70%)` }} />
           <div className="relative">
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-xl">{s.icon}</span>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                style={{ background: s.glow }}>
+                {s.icon}
+              </div>
               <span className="text-[10px] font-600 px-2 py-0.5 rounded-full"
-                style={{ color: s.accent, background: `${s.accent}18` }}>
+                style={{ color: s.accent, background: `${s.accent}15` }}>
                 {s.trend}
               </span>
             </div>
-            <p className="font-space font-700 text-xl text-snow">
-              {s.value}<span className="text-sm text-bark ml-0.5">{s.unit}</span>
+            <p className="font-space font-700 text-2xl text-snow leading-none">
+              {s.value}<span className="text-sm text-bark ml-0.5 font-400">{s.unit}</span>
             </p>
-            <p className="text-[11px] text-bark mt-0.5">{s.label}</p>
+            <p className="text-[11px] text-bark mt-1">{s.label}</p>
           </div>
         </motion.div>
       ))}
@@ -325,37 +334,38 @@ function QuickStats() {
 /* ── Activity feed ───────────────────────────────────────── */
 function ActivityFeed() {
   const events = [
-    { time: "Il y a 2 min",  text: "Panneau solaire actif — 3.2W captés",         type: "solar" },
-    { time: "Il y a 1h",     text: "Sophie T. t'a dépassé dans le classement",    type: "social" },
-    { time: "Il y a 3h",     text: "50g CO₂ évités · Badge \"Semaine verte\" débloqué", type: "co2" },
-    { time: "Hier 18:32",    text: "Smartphone rechargé via USB-C",                type: "charge" },
-    { time: "Hier 12:10",    text: "Spot solaire repéré : Parc de la Villette",    type: "map" },
-    { time: "Il y a 2j",     text: "Récompense échangée : 1 place de cinéma",     type: "reward" },
+    { time: "Il y a 2 min",  text: "Panneau solaire actif — 3.2W captés",              type: "solar",  accent: "#6DB82A", bg: "rgba(109,184,42,0.1)" },
+    { time: "Il y a 1h",     text: "Sophie T. t'a dépassé dans le classement",         type: "social", accent: "#0EA5E9", bg: "rgba(14,165,233,0.1)" },
+    { time: "Il y a 3h",     text: "50g CO₂ évités · Badge \"Semaine verte\" débloqué", type: "co2",    accent: "#10B981", bg: "rgba(16,185,129,0.1)" },
+    { time: "Hier 18:32",    text: "Smartphone rechargé via USB-C",                     type: "charge", accent: "#8B5CF6", bg: "rgba(139,92,246,0.1)" },
+    { time: "Hier 12:10",    text: "Spot solaire repéré : Parc de la Villette",         type: "map",    accent: "#F59E0B", bg: "rgba(245,158,11,0.1)" },
+    { time: "Il y a 2j",     text: "Récompense échangée : 1 place de cinéma",           type: "reward", accent: "#EC4899", bg: "rgba(236,72,153,0.1)" },
   ];
-  const colors: Record<string, string> = {
-    solar: "text-solar-dim", social: "text-blue-600", co2: "text-emerald-600",
-    charge: "text-purple-600", map: "text-amber-600", reward: "text-pink-600",
-  };
   const icons: Record<string, string> = {
     solar: "☀️", social: "👥", co2: "🌿", charge: "⚡", map: "📍", reward: "🎁",
   };
   return (
     <div className="card p-6">
       <p className="font-syne font-700 text-snow mb-5">Activité récente</p>
-      <div className="flex flex-col divide-y divide-forest-3/20">
+      <div className="flex flex-col gap-2">
         {events.map((e, i) => (
           <motion.div
             key={i}
-            className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+            className="flex items-center gap-3 p-3 rounded-xl"
+            style={{ background: e.bg }}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 + i * 0.06 }}
           >
-            <span className="text-base mt-0.5">{icons[e.type]}</span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+              style={{ background: `${e.accent}20` }}>
+              {icons[e.type]}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm ${colors[e.type]}`}>{e.text}</p>
+              <p className="text-sm text-snow font-500 truncate">{e.text}</p>
               <p className="text-[11px] text-bark mt-0.5">{e.time}</p>
             </div>
+            <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: e.accent, opacity: 0.4 }} />
           </motion.div>
         ))}
       </div>
@@ -379,7 +389,7 @@ function MissionsWidget() {
   return (
     <div className="card p-5 flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between">
-        <p className="font-syne font-700 text-snow text-sm">Missions</p>
+        <p className="font-syne font-700 text-snow text-sm">Missions du jour</p>
         <span className="text-[10px] text-solar-dim font-600">+500 XP dispo</span>
       </div>
       <div className="flex flex-col gap-3 flex-1">
@@ -417,22 +427,58 @@ function MissionsWidget() {
 
 /* ── Page ────────────────────────────────────────────────── */
 export default function DashboardPage() {
+  const { profile } = useProfile();
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-bark text-sm">Dimanche 18 mai · Paris, FR</p>
-          <h1 className="font-syne font-800 text-3xl text-snow mt-0.5">
-            Bonjour Mathieu <span className="text-solar">👋</span>
-          </h1>
+      {/* Hero header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+        className="hero-banner p-6 lg:p-8">
+        {/* Ambient glows */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-64 h-32 rounded-full opacity-20"
+            style={{ background: "radial-gradient(circle, #A8FF3E, transparent)", filter: "blur(40px)" }} />
+          <div className="absolute bottom-0 right-1/4 w-48 h-24 rounded-full opacity-10"
+            style={{ background: "radial-gradient(circle, #6DB82A, transparent)", filter: "blur(30px)" }} />
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full"
-          style={{ background: "rgba(109,184,42,0.08)", border: "1px solid rgba(109,184,42,0.22)" }}>
-          <motion.span className="w-2 h-2 rounded-full bg-solar-dim"
-            animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} />
-          <span className="text-solar-dim text-xs font-600">Panneau solaire actif · 3.2W</span>
+        <div className="relative flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            {profile.photo ? (
+              <img src={profile.photo} alt="profil"
+                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                style={{ boxShadow: "0 0 0 2px #A8FF3E, 0 0 20px rgba(168,255,62,0.3)" }} />
+            ) : (
+              <div className="w-14 h-14 rounded-full flex items-center justify-center font-syne font-800 text-xl flex-shrink-0"
+                style={{ background: "linear-gradient(135deg,#A8FF3E,#6DB82A)", color: "#0D1F14", boxShadow: "0 0 20px rgba(168,255,62,0.25)" }}>
+                {profile.firstName[0] ?? "M"}
+              </div>
+            )}
+            <div>
+              <p className="text-sm mb-0.5" style={{ color: "rgba(168,255,62,0.6)" }}>Lundi 19 mai · Paris, FR</p>
+              <h1 className="font-syne font-800 text-3xl text-white">
+                Bonjour {profile.firstName} <span style={{ color: "#A8FF3E" }}>👋</span>
+              </h1>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{ background: "rgba(168,255,62,0.12)", border: "1px solid rgba(168,255,62,0.3)" }}>
+              <motion.span className="w-2 h-2 rounded-full"
+                style={{ background: "#A8FF3E" }}
+                animate={{ opacity: [0.4, 1, 0.4], boxShadow: ["0 0 4px #A8FF3E", "0 0 10px #A8FF3E", "0 0 4px #A8FF3E"] }}
+                transition={{ duration: 1.5, repeat: Infinity }} />
+              <span className="text-xs font-600" style={{ color: "#A8FF3E" }}>Panneau solaire actif · 3.2W</span>
+            </div>
+            <div className="flex gap-3 text-right">
+              <div>
+                <p className="font-space font-700 text-lg text-white">78%</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>Batterie</p>
+              </div>
+              <div style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 12 }}>
+                <p className="font-space font-700 text-lg" style={{ color: "#A8FF3E" }}>1 240</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>Points XP</p>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 

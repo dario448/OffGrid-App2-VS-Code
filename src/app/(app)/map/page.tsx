@@ -72,17 +72,16 @@ function generateSpots(lat: number, lng: number): Spot[] {
   });
 }
 
-const HOURS = [
-  { h: "7h",  v: 10 }, { h: "8h",  v: 25 }, { h: "9h",  v: 55 }, { h: "10h", v: 78 },
-  { h: "11h", v: 92 }, { h: "12h", v: 98 }, { h: "13h", v: 95 }, { h: "14h", v: 88 },
-  { h: "15h", v: 75 }, { h: "16h", v: 55 }, { h: "17h", v: 30 }, { h: "18h", v: 10 },
-];
+type SunHour = { h: string; v: number; wm2: number };
+type SunInfo = { hours: SunHour[]; sunrise: string; sunset: string; peakHour: string };
 
 export default function MapPage() {
   const [userPos, setUserPos]     = useState<{ lat: number; lng: number } | null>(null);
   const [geoState, setGeoState]   = useState<"loading" | "ok" | "denied" | "unavailable">("loading");
   const [accuracy, setAccuracy]   = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [sunInfo, setSunInfo]     = useState<SunInfo | null>(null);
+  const [sunLoading, setSunLoading] = useState(false);
 
   const spots: Spot[] = userPos ? generateSpots(userPos.lat, userPos.lng) : [];
   const selectedSpot  = spots.find(s => s.id === selectedId);
@@ -94,6 +93,43 @@ export default function MapPage() {
         )
         .slice(0, 6)
     : [];
+
+  /* ── Données solaires open-meteo ────────────────────────── */
+  useEffect(() => {
+    if (!userPos) return;
+    setSunLoading(true);
+    const url =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${userPos.lat.toFixed(4)}&longitude=${userPos.lng.toFixed(4)}` +
+      `&hourly=shortwave_radiation&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        const times: string[]  = data.hourly.time;
+        const rads: number[]   = data.hourly.shortwave_radiation;
+        const today = times[0].slice(0, 10);
+        const daySlice = times
+          .map((t, i) => ({ h: t.slice(11, 13), v: rads[i] ?? 0 }))
+          .filter((x) => x.h >= "06" && x.h <= "20");
+        const maxRad = Math.max(...daySlice.map((x) => x.v), 1);
+        const hours: SunHour[] = daySlice.map((x) => ({
+          h:   x.h + "h",
+          v:   Math.round((x.v / maxRad) * 100),
+          wm2: Math.round(x.v),
+        }));
+        const peak = daySlice.reduce((a, b) => (b.v > a.v ? b : a));
+        const fmtTime = (iso: string) => iso.slice(11, 16);
+        setSunInfo({
+          hours,
+          sunrise:  fmtTime(data.daily.sunrise[0]),
+          sunset:   fmtTime(data.daily.sunset[0]),
+          peakHour: peak.h + "h",
+        });
+        void today;
+      })
+      .catch(() => setSunInfo(null))
+      .finally(() => setSunLoading(false));
+  }, [userPos?.lat, userPos?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── watchPosition en temps réel ────────────────────────── */
   useEffect(() => {
@@ -166,39 +202,45 @@ export default function MapPage() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-bark text-sm">Carte solaire</p>
-          <h1 className="font-syne font-800 text-2xl text-snow mt-0.5">
-            Spots ensoleillés <span className="text-solar-dim">près de toi</span>
-          </h1>
+      {/* Hero header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+        className="hero-banner p-6 lg:p-8">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/3 w-52 h-28 rounded-full opacity-15"
+            style={{ background: "radial-gradient(circle, #FCD34D, transparent)", filter: "blur(36px)" }} />
+          <div className="absolute bottom-0 right-1/4 w-40 h-20 rounded-full opacity-10"
+            style={{ background: "radial-gradient(circle, #0EA5E9, transparent)", filter: "blur(28px)" }} />
         </div>
-        {/* Indicateur position live */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border" style={{ borderColor: "rgba(109,184,42,0.25)", background: "rgba(109,184,42,0.06)" }}>
-          <motion.span className="w-2 h-2 rounded-full bg-solar-dim"
-            animate={{ opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 1.5, repeat: Infinity }} />
-          <span className="text-xs text-solar-dim font-600">Position live</span>
-          {accuracy && <span className="text-xs text-bark">±{accuracy}m</span>}
+        <div className="relative flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-sm mb-1" style={{ color: "rgba(14,165,233,0.7)" }}>Carte solaire</p>
+            <h1 className="font-syne font-800 text-3xl text-white">
+              Spots ensoleillés <span style={{ color: "#FCD34D" }}>près de toi</span>
+            </h1>
+            <div className="flex gap-5 mt-4">
+              {[
+                { label: "Conditions", value: "Ensoleillé ☀️" },
+                { label: "UV Index",   value: "7 — Élevé" },
+                { label: "Prévisions", value: "jusqu'à 18h" },
+              ].map((w) => (
+                <div key={w.label}>
+                  <p className="font-space font-600 text-sm text-white">{w.value}</p>
+                  <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{w.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full"
+            style={{ background: "rgba(168,255,62,0.12)", border: "1px solid rgba(168,255,62,0.3)" }}>
+            <motion.span className="w-2 h-2 rounded-full"
+              style={{ background: "#A8FF3E" }}
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.5, repeat: Infinity }} />
+            <span className="text-xs font-600" style={{ color: "#A8FF3E" }}>Position live</span>
+            {accuracy && <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>±{accuracy}m</span>}
+          </div>
         </div>
       </motion.div>
-
-      {/* Météo */}
-      <div className="flex flex-wrap gap-3">
-        {[
-          { label: "Coordonnées", value: `${userPos.lat.toFixed(4)}, ${userPos.lng.toFixed(4)}` },
-          { label: "Conditions",  value: "Ensoleillé ☀️" },
-          { label: "UV Index",    value: "7 — Élevé" },
-          { label: "Prévisions",  value: "Ensoleillé jusqu'à 18h" },
-        ].map((w) => (
-          <div key={w.label} className="card px-4 py-2 flex items-center gap-2">
-            <span className="text-xs text-bark">{w.label} :</span>
-            <span className="text-xs text-solar-dim font-600 font-space">{w.value}</span>
-          </div>
-        ))}
-      </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* ── Carte ──────────────────────────────── */}
@@ -290,27 +332,61 @@ export default function MapPage() {
 
       {/* Courbe journalière */}
       <div className="card p-6">
-        <p className="font-syne font-700 text-snow mb-5">Ensoleillement aujourd'hui</p>
-        <div className="flex items-end gap-2 h-20">
-          {HOURS.map((h, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <motion.div className="w-full rounded-t-sm"
-                style={{
-                  background: h.h === "12h" ? "linear-gradient(to top, #6DB82A, #A8FF3E)" : "rgba(168,255,62,0.2)",
-                  boxShadow: h.h === "12h" ? "0 0 10px rgba(168,255,62,0.3)" : "none",
-                }}
-                initial={{ height: 0 }}
-                animate={{ height: `${h.v}%` }}
-                transition={{ delay: 0.3 + i * 0.04, duration: 0.5 }} />
-              <span className="text-[9px] text-bark">{h.h}</span>
+        <div className="flex items-center justify-between mb-5">
+          <p className="font-syne font-700 text-snow">Ensoleillement aujourd'hui</p>
+          <div className="flex items-center gap-1.5">
+            {sunLoading && (
+              <motion.div className="w-3 h-3 rounded-full border-2 border-solar-dim border-t-transparent"
+                animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+            )}
+            <span className="text-[10px] text-bark/60">
+              {sunInfo ? "Données météo réelles · open-meteo.com" : sunLoading ? "Chargement…" : "Données indisponibles"}
+            </span>
+          </div>
+        </div>
+        {(() => {
+          const hours = sunInfo?.hours ?? [];
+          const BAR_MAX = 64;
+          return hours.length > 0 ? (
+            <>
+              <div className="flex items-end gap-1 h-20">
+                {hours.map((h, i) => {
+                  const isPeak = h.v === 100;
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <motion.div className="w-full rounded-t-sm"
+                        style={{
+                          background: isPeak
+                            ? "linear-gradient(to top, #6DB82A, #A8FF3E)"
+                            : h.v > 60
+                            ? "rgba(109,184,42,0.55)"
+                            : "rgba(109,184,42,0.2)",
+                          boxShadow: isPeak ? "0 0 10px rgba(109,184,42,0.35)" : "none",
+                        }}
+                        initial={{ height: 0 }}
+                        animate={{ height: (h.v / 100) * BAR_MAX }}
+                        transition={{ delay: 0.3 + i * 0.04, duration: 0.5 }} />
+                      <span className="text-[8px] text-bark/60">{h.h}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between mt-3 text-xs text-bark">
+                <span>🌅 Lever · {sunInfo?.sunrise ?? "—"}</span>
+                <span className="text-solar-dim font-600">Pic · {sunInfo?.peakHour ?? "—"}</span>
+                <span>🌇 Coucher · {sunInfo?.sunset ?? "—"}</span>
+              </div>
+            </>
+          ) : !sunLoading ? (
+            <p className="text-bark text-sm text-center py-6">Impossible de charger les données solaires.</p>
+          ) : (
+            <div className="flex items-end gap-1 h-20 opacity-30">
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div key={i} className="flex-1 rounded-t-sm" style={{ height: 20, background: "rgba(109,184,42,0.2)" }} />
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="flex justify-between mt-3 text-xs text-bark">
-          <span>Lever · 6h12</span>
-          <span className="text-solar-dim font-600">Pic : 12h–14h</span>
-          <span>Coucher · 21h38</span>
-        </div>
+          );
+        })()}
       </div>
     </div>
   );

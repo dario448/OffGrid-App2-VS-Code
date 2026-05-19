@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { MiniPlanet } from "@/components/Creature";
+import { useProfile } from "@/lib/useProfile";
 
 const GLOBAL_LEADERS = [
   { rank: 1,  name: "Mathieu R.",   country: "France",       co2: 4820, pts: 4820, avatar: "M", you: true },
@@ -39,43 +40,48 @@ export default function CommunityPage() {
   const [tab, setTab]             = useState<"global" | "friends">("friends");
   const [addFriendOpen, setAddFriendOpen] = useState(false);
   const [friendInput, setFriendInput]     = useState("");
+  const { profile } = useProfile();
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <p className="text-bark text-sm">Communauté</p>
-          <h1 className="font-syne font-800 text-2xl text-snow mt-0.5">
-            Qui économise <span className="text-solar-dim">le plus ?</span>
-          </h1>
+      {/* Hero header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+        className="hero-banner p-6 lg:p-8">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-1/4 w-56 h-28 rounded-full opacity-15"
+            style={{ background: "radial-gradient(circle, #7C3AED, transparent)", filter: "blur(36px)" }} />
+          <div className="absolute bottom-0 left-1/4 w-40 h-20 rounded-full opacity-10"
+            style={{ background: "radial-gradient(circle, #A8FF3E, transparent)", filter: "blur(28px)" }} />
         </div>
-        <motion.button
-          onClick={() => setAddFriendOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-syne font-700 text-sm"
-          style={{ background: "#6DB82A", color: "#fff" }}
-          whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(109,184,42,0.3)" }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-          </svg>
-          Ajouter un ami
-        </motion.button>
+        <div className="relative flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-sm mb-1" style={{ color: "rgba(139,92,246,0.7)" }}>Communauté</p>
+            <h1 className="font-syne font-800 text-3xl text-white">
+              Qui économise <span style={{ color: "#A8FF3E" }}>le plus ?</span>
+            </h1>
+            <div className="flex gap-6 mt-4">
+              {GLOBAL_STATS.map((s) => (
+                <div key={s.label}>
+                  <p className="font-space font-700 text-xl text-white">{s.value}</p>
+                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <motion.button
+            onClick={() => setAddFriendOpen(true)}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl font-syne font-700 text-sm"
+            style={{ background: "rgba(168,255,62,0.15)", border: "1px solid rgba(168,255,62,0.35)", color: "#A8FF3E" }}
+            whileHover={{ scale: 1.03, background: "rgba(168,255,62,0.22)" }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+            Ajouter un ami
+          </motion.button>
+        </div>
       </motion.div>
-
-      {/* Global stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {GLOBAL_STATS.map((s, i) => (
-          <motion.div key={s.label} className="card p-4 text-center"
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-            <p className="font-space font-700 text-2xl text-solar-dim">{s.value}</p>
-            <p className="text-[11px] text-bark mt-0.5">{s.label}</p>
-            {s.unit && <p className="text-[10px] text-bark/50">{s.unit}</p>}
-          </motion.div>
-        ))}
-      </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* ── Leaderboard ───────────────────────── */}
@@ -110,13 +116,18 @@ export default function CommunityPage() {
                     {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : user.rank}
                   </span>
 
-                  {/* Planet avatar */}
+                  {/* Avatar */}
                   <div className="relative flex-shrink-0">
-                    <div className={`rounded-full overflow-hidden flex items-center justify-center ${
-                      user.you ? "ring-2 ring-solar-dim ring-offset-1" : ""
-                    }`}>
-                      <MiniPlanet xp={user.pts} size={38} />
-                    </div>
+                    {user.you && profile.photo ? (
+                      <img src={profile.photo} alt="profil"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-solar-dim ring-offset-1" />
+                    ) : (
+                      <div className={`rounded-full overflow-hidden flex items-center justify-center ${
+                        user.you ? "ring-2 ring-solar-dim ring-offset-1" : ""
+                      }`}>
+                        <MiniPlanet xp={user.pts} size={38} />
+                      </div>
+                    )}
                     {"status" in user && (
                       <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
                         user.status === "online" ? "bg-emerald-500" : "bg-gray-300"
@@ -128,7 +139,8 @@ export default function CommunityPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <p className={`text-sm font-600 truncate ${user.you ? "text-solar-dim" : "text-snow"}`}>
-                        {user.name} {user.you && <span className="text-xs text-bark">(toi)</span>}
+                        {user.you ? `${profile.firstName} ${profile.lastName}` : user.name}
+                        {user.you && <span className="text-xs text-bark ml-1">(toi)</span>}
                       </p>
                     </div>
                     <p className="text-[11px] text-bark">

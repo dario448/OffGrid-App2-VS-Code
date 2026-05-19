@@ -25,12 +25,37 @@ export default function AvatarPage() {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <p className="text-bark text-sm">Avatar</p>
-        <h1 className="font-syne font-800 text-2xl text-snow mt-0.5">
-          Ton <span style={{ color: "#0D9488" }}>Orbe</span>
-        </h1>
+      {/* Hero header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+        className="hero-banner p-6 lg:p-8">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/3 w-48 h-24 rounded-full opacity-15"
+            style={{ background: "radial-gradient(circle, #0D9488, transparent)", filter: "blur(32px)" }} />
+          <div className="absolute bottom-0 right-1/4 w-40 h-20 rounded-full opacity-10"
+            style={{ background: "radial-gradient(circle, #A8FF3E, transparent)", filter: "blur(28px)" }} />
+        </div>
+        <div className="relative">
+          <p className="text-sm mb-1" style={{ color: "rgba(13,148,136,0.7)" }}>Mon Orbe</p>
+          <h1 className="font-syne font-800 text-3xl text-white">
+            Ton <span style={{ color: "#2DD4BF" }}>Orbe</span> évolue
+          </h1>
+          <div className="flex gap-6 mt-4">
+            <div>
+              <p className="font-space font-700 text-xl text-white">{USER_XP.toLocaleString("fr-FR")}</p>
+              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>XP total</p>
+            </div>
+            <div>
+              <p className="font-space font-700 text-xl" style={{ color: "#2DD4BF" }}>{stage.name}</p>
+              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>Stade actuel</p>
+            </div>
+            {next && (
+              <div>
+                <p className="font-space font-700 text-xl text-white">{(next.xpMin - USER_XP).toLocaleString("fr-FR")}</p>
+                <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>XP avant {next.name}</p>
+              </div>
+            )}
+          </div>
+        </div>
       </motion.div>
 
       {/* Current avatar */}

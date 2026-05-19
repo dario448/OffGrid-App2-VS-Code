@@ -1,5 +1,6 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
 
 /* ── 10 Stages ──────────────────────────────────────────────── */
 export const ORBE_STAGES = [
@@ -22,13 +23,21 @@ export function getOrbeStage(xp: number) {
 }
 
 /* ── Reusable blinking eye ──────────────────────────────────── */
-function Eye({ cx, cy, pupilColor = "#222", delay = 0, size = 10 }: {
-  cx: number; cy: number; pupilColor?: string; delay?: number; size?: number;
+function Eye({ cx, cy, pupilColor = "#222", delay = 0, size = 10, browColor }: {
+  cx: number; cy: number; pupilColor?: string; delay?: number; size?: number; browColor?: string;
 }) {
   const pr = size * 0.58;
   const gr = size * 0.2;
+  const bw = size * 1.25;
+  const by = -(size * 1.65);
   return (
     <g transform={`translate(${cx},${cy})`}>
+      {browColor && (
+        <path
+          d={`M${-bw},${by} Q0,${by - size * 0.5} ${bw},${by}`}
+          stroke={browColor} strokeWidth={size * 0.22} fill="none" strokeLinecap="round"
+        />
+      )}
       <motion.g
         animate={{ scaleY: [1, 1, 1, 1, 0.04, 0.04, 1, 1] }}
         transition={{ duration: 5, repeat: Infinity, ease: "linear", times: [0, 0.42, 0.46, 0.49, 0.51, 0.54, 0.58, 1], delay }}
@@ -36,8 +45,32 @@ function Eye({ cx, cy, pupilColor = "#222", delay = 0, size = 10 }: {
         <circle r={size} fill="white" />
         <circle r={pr} fill={pupilColor} />
         <circle cx={pr * 0.45} cy={-pr * 0.45} r={gr} fill="rgba(255,255,255,0.85)" />
+        {/* small sparkle */}
+        <circle cx={-pr * 0.3} cy={pr * 0.35} r={gr * 0.6} fill="rgba(255,255,255,0.5)" />
       </motion.g>
     </g>
+  );
+}
+
+/* ── Cheek blush ─────────────────────────────────────────────── */
+function Blush({ cx, cy, rx = 11, ry = 6, color = "rgba(255,120,100,0.18)" }: {
+  cx: number; cy: number; rx?: number; ry?: number; color?: string;
+}) {
+  return <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={color} />;
+}
+
+/* ── Animated smile wrapper ─────────────────────────────────── */
+function Smile({ d, stroke, width = 2.5, delay = 0 }: {
+  d: string; stroke: string; width?: number; delay?: number;
+}) {
+  return (
+    <motion.g
+      style={{ transformBox: "view-box" as never, transformOrigin: "50% 50%" }}
+      animate={{ scaleX: [1, 1.08, 1, 1.05, 1] }}
+      transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay }}
+    >
+      <path d={d} stroke={stroke} strokeWidth={width} fill="none" strokeLinecap="round" />
+    </motion.g>
   );
 }
 
@@ -53,8 +86,10 @@ function RocheSVG() {
       <circle cx={22} cy={24} r={5} fill="rgba(0,0,0,0.15)" />
       <circle cx={32} cy={-6} r={4} fill="rgba(0,0,0,0.13)" />
       <ellipse cx={-18} cy={-20} rx={20} ry={14} fill="rgba(255,255,255,0.1)" transform="rotate(-25,-18,-20)" />
-      <Eye cx={-18} cy={-5} pupilColor="#555" delay={0} size={9} />
-      <Eye cx={18} cy={-5} pupilColor="#555" delay={0.3} size={9} />
+      <Eye cx={-18} cy={-5} pupilColor="#555" delay={0} size={9} browColor="rgba(80,80,80,0.55)" />
+      <Eye cx={18} cy={-5} pupilColor="#555" delay={0.3} size={9} browColor="rgba(80,80,80,0.55)" />
+      <Blush cx={-30} cy={10} rx={10} ry={5} color="rgba(160,160,160,0.18)" />
+      <Blush cx={30} cy={10} rx={10} ry={5} color="rgba(160,160,160,0.18)" />
       <path d="M-27,-14 Q-18,-19 -9,-15" stroke="#666" strokeWidth="2" fill="none" strokeLinecap="round" />
       <path d="M9,-15 Q18,-19 27,-14" stroke="#666" strokeWidth="2" fill="none" strokeLinecap="round" />
       <path d="M-10,16 Q0,12 10,16" stroke="#777" strokeWidth="2" fill="none" strokeLinecap="round" />
@@ -70,11 +105,13 @@ function CaillouSVG() {
       <ellipse cx={15} cy={20} rx={18} ry={12} fill="rgba(0,0,0,0.08)" />
       <ellipse cx={-22} cy={18} rx={12} ry={10} fill="rgba(255,200,100,0.2)" />
       <ellipse cx={-20} cy={-22} rx={18} ry={13} fill="rgba(255,255,255,0.12)" transform="rotate(-20,-20,-22)" />
-      <Eye cx={-18} cy={-4} pupilColor="#5a3a10" delay={0} size={9} />
-      <Eye cx={18} cy={-4} pupilColor="#5a3a10" delay={0.4} size={9} />
+      <Eye cx={-18} cy={-4} pupilColor="#5a3a10" delay={0} size={9} browColor="rgba(100,65,20,0.6)" />
+      <Eye cx={18} cy={-4} pupilColor="#5a3a10" delay={0.4} size={9} browColor="rgba(100,65,20,0.6)" />
+      <Blush cx={-30} cy={11} rx={11} ry={6} color="rgba(200,140,80,0.2)" />
+      <Blush cx={30} cy={11} rx={11} ry={6} color="rgba(200,140,80,0.2)" />
       <path d="M-27,-4 Q-18,-8 -9,-4" stroke="#8a6030" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       <path d="M9,-4 Q18,-8 27,-4" stroke="#8a6030" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <path d="M-10,16 Q0,17 10,16" stroke="#8a6030" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <Smile d="M-10,16 Q0,20 10,16" stroke="#8a6030" width={2} delay={1} />
     </motion.g>
   );
 }
@@ -88,11 +125,13 @@ function TerriaSVG() {
       <ellipse cx={18} cy={14} rx={10} ry={8} fill="#3a9048" opacity={0.65} />
       <ellipse cx={-22} cy={18} rx={8} ry={6} fill="#3a9048" opacity={0.55} />
       <ellipse cx={-18} cy={-22} rx={20} ry={13} fill="rgba(255,255,255,0.14)" transform="rotate(-20,-18,-22)" />
-      <Eye cx={-18} cy={-6} pupilColor="#1a3a6a" delay={0} size={10} />
-      <Eye cx={18} cy={-6} pupilColor="#1a3a6a" delay={0.2} size={10} />
+      <Eye cx={-18} cy={-6} pupilColor="#1a3a6a" delay={0} size={10} browColor="rgba(30,60,130,0.55)" />
+      <Eye cx={18} cy={-6} pupilColor="#1a3a6a" delay={0.2} size={10} browColor="rgba(30,60,130,0.55)" />
+      <Blush cx={-30} cy={10} rx={12} ry={6} color="rgba(100,160,230,0.2)" />
+      <Blush cx={30} cy={10} rx={12} ry={6} color="rgba(100,160,230,0.2)" />
       <path d="M-27,-16 Q-18,-21 -9,-17" stroke="#4a80c0" strokeWidth="2" fill="none" strokeLinecap="round" />
       <path d="M9,-17 Q18,-21 27,-16" stroke="#4a80c0" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M-10,17 Q0,23 10,17" stroke="#4a80c0" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <Smile d="M-10,17 Q0,25 10,17" stroke="#4a80c0" width={2} delay={0.5} />
     </motion.g>
   );
 }
@@ -112,11 +151,13 @@ function ViridaSVG() {
         <ellipse cx={22} cy={22} rx={13} ry={7} fill="rgba(255,255,255,0.75)" />
       </motion.g>
       <ellipse cx={-20} cy={-24} rx={18} ry={13} fill="rgba(255,255,255,0.14)" transform="rotate(-20,-20,-24)" />
-      <Eye cx={-18} cy={-2} pupilColor="#0d3a18" delay={0} size={11} />
-      <Eye cx={18} cy={-2} pupilColor="#0d3a18" delay={0.35} size={11} />
+      <Eye cx={-18} cy={-2} pupilColor="#0d3a18" delay={0} size={11} browColor="rgba(10,60,25,0.6)" />
+      <Eye cx={18} cy={-2} pupilColor="#0d3a18" delay={0.35} size={11} browColor="rgba(10,60,25,0.6)" />
+      <Blush cx={-32} cy={13} rx={13} ry={7} color="rgba(80,200,100,0.22)" />
+      <Blush cx={32} cy={13} rx={13} ry={7} color="rgba(80,200,100,0.22)" />
       <path d="M-28,-13 Q-18,-19 -8,-14" stroke="#1a6030" strokeWidth="2" fill="none" strokeLinecap="round" />
       <path d="M8,-14 Q18,-19 28,-13" stroke="#1a6030" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M-14,18 Q0,28 14,18" stroke="#1a6030" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <Smile d="M-14,18 Q0,30 14,18" stroke="#1a6030" width={2.5} delay={0} />
     </motion.g>
   );
 }
@@ -132,13 +173,15 @@ function AquariusSVG() {
       <ellipse cx={0} cy={50} rx={17} ry={8} fill="rgba(255,255,255,0.5)" />
       <ellipse cx={-10} cy={-4} rx={18} ry={12} fill="rgba(255,255,255,0.1)" />
       <ellipse cx={-22} cy={-26} rx={18} ry={12} fill="rgba(255,255,255,0.14)" transform="rotate(-20,-22,-26)" />
-      <Eye cx={-18} cy={-4} pupilColor="#082848" delay={0} size={11} />
-      <Eye cx={18} cy={-4} pupilColor="#082848" delay={0.25} size={11} />
+      <Eye cx={-18} cy={-4} pupilColor="#082848" delay={0} size={11} browColor="rgba(8,40,90,0.55)" />
+      <Eye cx={18} cy={-4} pupilColor="#082848" delay={0.25} size={11} browColor="rgba(8,40,90,0.55)" />
+      <Blush cx={-32} cy={12} rx={13} ry={7} color="rgba(80,180,255,0.2)" />
+      <Blush cx={32} cy={12} rx={13} ry={7} color="rgba(80,180,255,0.2)" />
       <motion.text x="-20" y="-19" fontSize="9" fill="#90d8f8" textAnchor="middle"
         animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity }}>✦</motion.text>
       <motion.text x="20" y="-19" fontSize="9" fill="#90d8f8" textAnchor="middle"
         animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}>✦</motion.text>
-      <path d="M-14,18 Q0,28 14,18" stroke="#70c8f0" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <Smile d="M-14,18 Q0,30 14,18" stroke="#70c8f0" width={2.5} delay={1.5} />
       {/* Ring front */}
       <path d="M -84 0 A 84 18 0 0 1 84 0" fill="none" stroke="#70c8f0" strokeWidth="4" opacity={0.72} transform="rotate(-20)" />
     </motion.g>
@@ -173,11 +216,13 @@ function SylvanaSVG() {
       >
         <circle cx={-96} cy={-22} r={6} fill="#d0e8d0" />
       </motion.g>
-      <Eye cx={-18} cy={-4} pupilColor="#022818" delay={0} size={12} />
-      <Eye cx={18} cy={-4} pupilColor="#022818" delay={0.3} size={12} />
+      <Eye cx={-18} cy={-4} pupilColor="#022818" delay={0} size={12} browColor="rgba(2,40,25,0.6)" />
+      <Eye cx={18} cy={-4} pupilColor="#022818" delay={0.3} size={12} browColor="rgba(2,40,25,0.6)" />
+      <Blush cx={-33} cy={13} rx={14} ry={7} color="rgba(40,200,130,0.2)" />
+      <Blush cx={33} cy={13} rx={14} ry={7} color="rgba(40,200,130,0.2)" />
       <path d="M-29,-16 Q-18,-23 -7,-17" stroke="#0d8a55" strokeWidth="2" fill="none" strokeLinecap="round" />
       <path d="M7,-17 Q18,-23 29,-16" stroke="#0d8a55" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M-15,18 Q0,30 15,18" stroke="#40c890" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Smile d="M-15,18 Q0,32 15,18" stroke="#40c890" width={3} delay={0.8} />
       {/* Ring front */}
       <path d="M -88 0 A 88 20 0 0 1 88 0" fill="none" stroke="#40c890" strokeWidth="3" opacity={0.62} transform="rotate(-18)" />
     </motion.g>
@@ -202,13 +247,15 @@ function MysticaSVG() {
         <circle cx={30} cy={30} r={1.5} fill="#c090fc" />
       </motion.g>
       <ellipse cx={-22} cy={-28} rx={18} ry={12} fill="rgba(255,255,255,0.1)" transform="rotate(-22,-22,-28)" />
-      <Eye cx={-18} cy={-5} pupilColor="#250050" delay={0} size={11} />
-      <Eye cx={18} cy={-5} pupilColor="#250050" delay={0.2} size={11} />
+      <Eye cx={-18} cy={-5} pupilColor="#250050" delay={0} size={11} browColor="rgba(80,0,140,0.55)" />
+      <Eye cx={18} cy={-5} pupilColor="#250050" delay={0.2} size={11} browColor="rgba(80,0,140,0.55)" />
+      <Blush cx={-32} cy={13} rx={13} ry={7} color="rgba(180,100,255,0.2)" />
+      <Blush cx={32} cy={13} rx={13} ry={7} color="rgba(180,100,255,0.2)" />
       <motion.text x="-20" y="-20" fontSize="10" fill="#c090fc" textAnchor="middle"
         animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.6, repeat: Infinity }}>✦</motion.text>
       <motion.text x="20" y="-20" fontSize="10" fill="#c090fc" textAnchor="middle"
         animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.6, repeat: Infinity, delay: 0.5 }}>✦</motion.text>
-      <path d="M-15,18 Q0,30 15,18" stroke="#c090fc" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Smile d="M-15,18 Q0,32 15,18" stroke="#c090fc" width={3} delay={2} />
       {/* Ring front */}
       <path d="M -90 0 A 90 22 0 0 1 90 0" fill="none" stroke="#b070f0" strokeWidth="5" opacity={0.65} transform="rotate(-22)" />
     </motion.g>
@@ -232,11 +279,13 @@ function InfernaSVG() {
       <motion.ellipse cx={20} cy={20} rx={8} ry={6} fill="#FF5500" opacity={0.3}
         animate={{ opacity: [0.2, 0.55, 0.2] }} transition={{ duration: 1.9, repeat: Infinity, delay: 0.4 }} />
       <ellipse cx={-22} cy={-28} rx={18} ry={12} fill="rgba(255,255,255,0.08)" transform="rotate(-22,-22,-28)" />
-      <Eye cx={-18} cy={-5} pupilColor="#580a00" delay={0} size={11} />
-      <Eye cx={18} cy={-5} pupilColor="#580a00" delay={0.2} size={11} />
+      <Eye cx={-18} cy={-5} pupilColor="#580a00" delay={0} size={11} browColor="rgba(150,20,0,0.6)" />
+      <Eye cx={18} cy={-5} pupilColor="#580a00" delay={0.2} size={11} browColor="rgba(150,20,0,0.6)" />
+      <Blush cx={-32} cy={13} rx={13} ry={7} color="rgba(255,80,30,0.2)" />
+      <Blush cx={32} cy={13} rx={13} ry={7} color="rgba(255,80,30,0.2)" />
       <path d="M-28,-15 Q-18,-23 -8,-18" stroke="#FF5500" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       <path d="M8,-18 Q18,-23 28,-15" stroke="#FF5500" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      <path d="M-15,18 Q0,30 15,18" stroke="#FF7800" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Smile d="M-15,18 Q0,32 15,18" stroke="#FF7800" width={3} delay={0.3} />
       {/* Ring front */}
       <motion.path d="M -90 0 A 90 22 0 0 1 90 0" fill="none" stroke="#FF6800" strokeWidth="6" transform="rotate(-18)"
         animate={{ stroke: ["#FF4400", "#FF9900", "#FF4400"], opacity: [0.55, 0.85, 0.55] }}
@@ -261,13 +310,15 @@ function GlaciusSVG() {
       <path d="M20,-5 L30,-21 L38,-10 L28,5Z" fill="rgba(255,255,255,0.1)" />
       <ellipse cx={0} cy={-52} rx={22} ry={10} fill="rgba(255,255,255,0.75)" />
       <ellipse cx={0} cy={52} rx={18} ry={8} fill="rgba(255,255,255,0.6)" />
-      <Eye cx={-18} cy={-5} pupilColor="#083848" delay={0} size={11} />
-      <Eye cx={18} cy={-5} pupilColor="#083848" delay={0.2} size={11} />
+      <Eye cx={-18} cy={-5} pupilColor="#083848" delay={0} size={11} browColor="rgba(8,80,110,0.55)" />
+      <Eye cx={18} cy={-5} pupilColor="#083848" delay={0.2} size={11} browColor="rgba(8,80,110,0.55)" />
+      <Blush cx={-32} cy={13} rx={13} ry={7} color="rgba(140,230,255,0.22)" />
+      <Blush cx={32} cy={13} rx={13} ry={7} color="rgba(140,230,255,0.22)" />
       <motion.text x="-20" y="-20" fontSize="11" fill="#c8f8ff" textAnchor="middle"
         animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2.2, repeat: Infinity }}>✦</motion.text>
       <motion.text x="20" y="-20" fontSize="11" fill="#c8f8ff" textAnchor="middle"
         animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 2.2, repeat: Infinity, delay: 0.7 }}>✦</motion.text>
-      <path d="M-15,18 Q0,30 15,18" stroke="#c8f8ff" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <Smile d="M-15,18 Q0,32 15,18" stroke="#c8f8ff" width={3} delay={1.2} />
       {/* Ring fronts */}
       <path d="M -92 0 A 92 20 0 0 1 92 0" fill="none" stroke="#90e8ff" strokeWidth="3" opacity={0.65} transform="rotate(-25)" />
       <path d="M -80 0 A 80 14 0 0 1 80 0" fill="none" stroke="#c8f8ff" strokeWidth="2" opacity={0.52} transform="rotate(12)" />
@@ -302,8 +353,10 @@ function SolariaSVG() {
           animate={{ opacity: [0.15, 0.8, 0.15], r: [2, 4, 2] }}
           transition={{ duration: 2, repeat: Infinity, delay: i * 0.25 }} />
       ))}
-      <Eye cx={-18} cy={-5} pupilColor="#5a2c00" delay={0} size={12} />
-      <Eye cx={18} cy={-5} pupilColor="#5a2c00" delay={0.15} size={12} />
+      <Eye cx={-18} cy={-5} pupilColor="#5a2c00" delay={0} size={12} browColor="rgba(120,60,0,0.6)" />
+      <Eye cx={18} cy={-5} pupilColor="#5a2c00" delay={0.15} size={12} browColor="rgba(120,60,0,0.6)" />
+      <Blush cx={-33} cy={14} rx={14} ry={8} color="rgba(255,200,50,0.22)" />
+      <Blush cx={33} cy={14} rx={14} ry={8} color="rgba(255,200,50,0.22)" />
       <path d="M-29,-16 Q-18,-25 -7,-17" stroke="#E5A800" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       <path d="M7,-17 Q18,-25 29,-16" stroke="#E5A800" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       {[-42, 42, -14, 14].map((ang, i) => (
@@ -315,7 +368,7 @@ function SolariaSVG() {
           ✦
         </motion.text>
       ))}
-      <path d="M-18,18 Q0,34 18,18" stroke="#fff8" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      <Smile d="M-18,18 Q0,36 18,18" stroke="#fff8" width={3.5} delay={0} />
       {/* Rings front */}
       <motion.path d="M -96 0 A 96 22 0 0 1 96 0" fill="none" stroke="#E5A800" strokeWidth="5" transform="rotate(-20)"
         animate={{ opacity: [0.58, 0.85, 0.58] }} transition={{ duration: 1.5, repeat: Infinity }} />
@@ -384,6 +437,7 @@ export default function Creature({ xp = 1240, health = 82, solarActive = true }:
   const xpInStage = xp - stage.xpMin;
   const xpRange = stage.xpMax === Infinity ? xp : stage.xpMax - stage.xpMin;
   const progress = Math.min(xpInStage / xpRange, 1);
+  const [nextTipOpen, setNextTipOpen] = useState(false);
 
   return (
     <div className="card card-hover p-6 flex flex-col gap-4">
@@ -427,7 +481,46 @@ export default function Creature({ xp = 1240, health = 82, solarActive = true }:
           {nextStage && (
             <div className="flex flex-col gap-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-bark">Vers {nextStage.name}</span>
+                <span className="text-bark flex items-center gap-1.5">
+                  Vers {nextStage.name}
+                  <span className="relative">
+                    <button
+                      onClick={() => setNextTipOpen((v) => !v)}
+                      className="w-3.5 h-3.5 rounded-full border border-bark/35 flex items-center justify-center text-[9px] text-bark/50 select-none leading-none hover:border-bark/60 hover:text-bark/80 transition-colors"
+                    >?</button>
+                    <AnimatePresence>
+                      {nextTipOpen && (
+                        <>
+                          <motion.div
+                            className="fixed inset-0 z-20"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            onClick={() => setNextTipOpen(false)}
+                          />
+                          <motion.div
+                            className="absolute left-1/2 top-full mt-2 w-60 p-3.5 rounded-xl text-[11px] leading-relaxed text-snow bg-white shadow-xl border z-30 text-left"
+                            style={{ transform: "translateX(-50%)", borderColor: `${nextStage.color}30` }}
+                            initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <MiniPlanet xp={nextStage.xpMin === 0 ? 1 : nextStage.xpMin} size={28} />
+                              <p className="font-syne font-700 text-sm" style={{ color: nextStage.color }}>{nextStage.name}</p>
+                            </div>
+                            <p className="text-bark mb-2">{nextStage.desc}</p>
+                            <div className="flex items-center justify-between pt-2 border-t border-black/[0.06]">
+                              <span className="text-bark/70">XP nécessaires</span>
+                              <span className="font-space font-700 text-xs" style={{ color: nextStage.color }}>
+                                {(stage.xpMax - xp).toLocaleString("fr-FR")} XP
+                              </span>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </span>
+                </span>
                 <span className="font-space font-600" style={{ color: stage.color }}>
                   {(stage.xpMax - xp).toLocaleString("fr-FR")} XP
                 </span>

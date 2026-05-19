@@ -68,45 +68,58 @@ export default function DuelsPage() {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <p className="text-bark text-sm">Duels</p>
-          <h1 className="font-syne font-800 text-2xl text-snow mt-0.5">
-            Défie tes <span style={{ color: "#DC2626" }}>amis.</span>
-          </h1>
+      {/* Hero header */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
+        className="hero-banner p-6 lg:p-8">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-1/4 w-52 h-28 rounded-full opacity-15"
+            style={{ background: "radial-gradient(circle, #DC2626, transparent)", filter: "blur(36px)" }} />
+          <div className="absolute bottom-0 left-1/3 w-40 h-20 rounded-full opacity-10"
+            style={{ background: "radial-gradient(circle, #FF6B6B, transparent)", filter: "blur(28px)" }} />
         </div>
-        <motion.button
-          onClick={() => canStartNew && setNewDuelOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-syne font-700 text-sm transition-opacity"
-          style={{ background: canStartNew ? "#DC2626" : "#9ca3af", color: "#fff", opacity: canStartNew ? 1 : 0.6, cursor: canStartNew ? "pointer" : "not-allowed" }}
-          whileHover={canStartNew ? { scale: 1.03, boxShadow: "0 0 20px rgba(220,38,38,0.3)" } : {}}
-          whileTap={canStartNew ? { scale: 0.97 } : {}}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
-            <line x1="13" y1="19" x2="19" y2="13"/>
-            <line x1="16" y1="16" x2="20" y2="20"/>
-            <line x1="19" y1="21" x2="21" y2="19"/>
-          </svg>
-          {canStartNew ? "Nouveau duel" : "Max 2 duels actifs"}
-        </motion.button>
-      </motion.div>
-
-      {/* Rule strip */}
-      <motion.div
-        className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm"
-        style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}
-        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        <p className="text-bark text-xs">
-          Lance un duel de <span className="font-600 text-snow">2 à 7 jours</span> contre un ami. Le joueur qui cumule le plus de XP pendant la durée remporte la mise.{" "}
-          <span className="font-600 text-snow">Max 2 duels simultanés.</span>
-        </p>
+        <div className="relative flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-sm mb-1" style={{ color: "rgba(220,38,38,0.7)" }}>Duels</p>
+            <h1 className="font-syne font-800 text-3xl text-white">
+              Défie tes <span style={{ color: "#FCA5A5" }}>amis.</span>
+            </h1>
+            <p className="text-[12px] mt-3 max-w-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
+              2 à 7 jours · Le plus de XP gagne · Max 2 duels simultanés
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-3">
+            <div className="flex gap-4">
+              <div className="text-center">
+                <p className="font-space font-700 text-2xl" style={{ color: "#FCA5A5" }}>{activeCount}</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>duels actifs</p>
+              </div>
+              <div className="text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 16 }}>
+                <p className="font-space font-700 text-2xl text-white">{HISTORY.filter(h => h.result === "win").length}</p>
+                <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>victoires</p>
+              </div>
+            </div>
+            <motion.button
+              onClick={() => canStartNew && setNewDuelOpen(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-syne font-700 text-sm"
+              style={{
+                background: canStartNew ? "rgba(220,38,38,0.25)" : "rgba(255,255,255,0.1)",
+                border: canStartNew ? "1px solid rgba(220,38,38,0.5)" : "1px solid rgba(255,255,255,0.15)",
+                color: canStartNew ? "#FCA5A5" : "rgba(255,255,255,0.3)",
+                cursor: canStartNew ? "pointer" : "not-allowed",
+              }}
+              whileHover={canStartNew ? { scale: 1.03, background: "rgba(220,38,38,0.35)" } : {}}
+              whileTap={canStartNew ? { scale: 0.97 } : {}}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>
+                <line x1="13" y1="19" x2="19" y2="13"/>
+                <line x1="16" y1="16" x2="20" y2="20"/>
+                <line x1="19" y1="21" x2="21" y2="19"/>
+              </svg>
+              {canStartNew ? "Nouveau duel" : "Max 2 duels actifs"}
+            </motion.button>
+          </div>
+        </div>
       </motion.div>
 
       {/* Active duels */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, CircleMarker, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,6 +14,40 @@ export interface Spot {
   lat: number;
   lng: number;
   rare?: boolean;
+}
+
+/* ── Icône spot dynamique ────────────────────────────────── */
+function spotEmoji(intensity: number, rare: boolean): string {
+  if (rare) return "⭐";
+  if (intensity >= 85) return "☀️";
+  if (intensity >= 65) return "🌤️";
+  if (intensity >= 45) return "⛅";
+  return "☁️";
+}
+
+function makeSpotIcon(spot: Spot, isSelected: boolean): L.DivIcon {
+  const emoji = spotEmoji(spot.intensity, !!spot.rare);
+  const size  = isSelected ? 42 : 34;
+  const border = spot.rare ? "#f59e0b" : isSelected ? "#6DB82A" : "rgba(109,184,42,0.55)";
+  const shadow = spot.rare
+    ? "0 0 14px rgba(245,158,11,0.55)"
+    : isSelected
+    ? "0 0 14px rgba(109,184,42,0.45)"
+    : "0 2px 8px rgba(0,0,0,0.15)";
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:white;border:2.5px solid ${border};
+      display:flex;align-items:center;justify-content:center;
+      font-size:${isSelected ? 20 : 16}px;
+      box-shadow:${shadow};
+      transition:all 0.2s;
+    ">${emoji}</div>`,
+    iconSize:   [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
 }
 
 /* ── Fix icône Leaflet (Next.js) ─────────────────────────── */
@@ -134,20 +168,11 @@ export default function SolarMap({ spots, selectedId, onSelect, userLat, userLng
       {/* ── Spots solaires ────────────────────── */}
       {spots.map((spot) => {
         const isSelected = spot.id === selectedId;
-        const rareColor = "#f59e0b";
         return (
-          <CircleMarker
-            key={spot.id}
-            center={[spot.lat, spot.lng]}
-            radius={isSelected ? 16 : spot.rare ? 13 : 11}
-            pathOptions={{
-              color:       isSelected ? (spot.rare ? "#d97706" : "#5c9e1a") : spot.rare ? rareColor : "#6DB82A",
-              fillColor:   spot.rare
-                ? `rgba(245,158,11,${spot.intensity / 100 * 0.8})`
-                : `rgba(168,255,62,${spot.intensity / 100 * 0.75})`,
-              fillOpacity: 1,
-              weight:      isSelected ? 3 : spot.rare ? 3 : 2,
-            }}
+          <Marker
+            key={`${spot.id}-${isSelected}`}
+            position={[spot.lat, spot.lng]}
+            icon={makeSpotIcon(spot, isSelected)}
             eventHandlers={{ click: () => onSelect(spot.id) }}
           >
             <Popup>
@@ -156,13 +181,13 @@ export default function SolarMap({ spots, selectedId, onSelect, userLat, userLng
                 <strong style={{ fontSize: 13, color: "#1a2e1a" }}>{spot.name}</strong>
                 <br />
                 <span style={{ color: spot.rare ? "#d97706" : "#5c9e1a", fontSize: 12 }}>
-                  ☀️ {spot.sun} · {spot.intensity}% intensité
+                  {spotEmoji(spot.intensity, !!spot.rare)} {spot.sun} · {spot.intensity}% intensité
                 </span>
                 <br />
                 <span style={{ fontSize: 11, color: "#666" }}>{spot.dist} de toi</span>
               </div>
             </Popup>
-          </CircleMarker>
+          </Marker>
         );
       })}
     </MapContainer>
